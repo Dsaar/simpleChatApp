@@ -16,7 +16,7 @@ function App() {
 
   useEffect(() => {
     socket.on("message received", (data) => setMessages(data));
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
