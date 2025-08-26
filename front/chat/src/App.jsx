@@ -3,6 +3,7 @@ import { io } from "socket.io-client"
 import { useState } from "react";
 import { useEffect } from "react";
 import ChatMessage from "./ChatMessage";
+import { useRef } from "react";
 
 
 const socket = io("http://localhost:8181")
@@ -11,10 +12,15 @@ function App() {
   const [messages, setMessages] = useState([])
   const [message, setMessage] = useState("")
   const [userName, setUserName] = useState("")
+  const bottomRef = useRef(null)
 
   useEffect(() => {
     socket.on("message received", (data) => setMessages(data));
-  }, [socket])
+  }, []);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = () => {
     if (!message) return
@@ -22,9 +28,17 @@ function App() {
     const msgObj = {
       content: message,
       sender: userName || "Anonymus",
-      time: new Date(),
-    }
+      time: new Date().toLocaleString([], {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
     socket.emit("message sent", msgObj)
+
+    setMessage("")
   };
 
   return (
@@ -62,7 +76,7 @@ function App() {
           {/* Messages will go here later */}
 
 
-          {messages.map((msg,idx) => (
+          {messages.map((msg, idx) => (
             <ChatMessage
               key={idx}
               sender={msg.sender}
@@ -72,7 +86,8 @@ function App() {
             />
           ))}
 
-
+          {/*invisible div as anchor */}
+          <div ref={bottomRef} />
         </Box>
 
 

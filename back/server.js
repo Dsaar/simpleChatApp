@@ -14,6 +14,9 @@ const chatMessages=[];
 io.on("connection", (socket) => {
 	console.log("New user connected:", socket.id);
 
+	socket.emit("message received", chatMessages);
+
+
 	socket.on("message sent", (data) => {
 		console.log(data)
 		chatMessages.push(data)
