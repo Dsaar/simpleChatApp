@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useEffect } from "react";
 import ChatMessage from "./ChatMessage";
 import { useRef } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 
 const socket = io("http://localhost:8181")
@@ -11,8 +12,11 @@ const socket = io("http://localhost:8181")
 function App() {
   const [messages, setMessages] = useState([])
   const [message, setMessage] = useState("")
-  const [userName, setUserName] = useState("")
-  const bottomRef = useRef(null)
+  const [userName, setUserName] = useState(
+    sessionStorage.getItem("userName") ?? ""
+  );
+  const bottomRef = useRef(null);
+  const inputRef = useRef(null);
 
   useEffect(() => {
     socket.on("message received", (data) => setMessages(data));
@@ -26,6 +30,7 @@ function App() {
     if (!message) return
 
     const msgObj = {
+      id: uuidv4(),
       content: message,
       sender: userName || "Anonymus",
       time: new Date().toLocaleString([], {
@@ -38,7 +43,8 @@ function App() {
     };
     socket.emit("message sent", msgObj)
 
-    setMessage("")
+    setMessage("");
+    inputRef.current?.focus();
   };
 
   return (
@@ -76,9 +82,9 @@ function App() {
           {/* Messages will go here later */}
 
 
-          {messages.map((msg, idx) => (
+          {messages.map((msg) => (
             <ChatMessage
-              key={idx}
+              key={msg.id}
               sender={msg.sender}
               time={msg.time}
               content={msg.content}
@@ -101,12 +107,20 @@ function App() {
           }}
         >
           <TextField
+            inputRef={inputRef}
             variant="outlined"
             placeholder="Type your message..."
             size="small"
             fullWidth
             sx={{ mr: 1 }}
+            value={message}
             onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault(); // stop newline
+                sendMessage();
+              }
+            }}
           />
           <Button
             variant="contained"
@@ -124,7 +138,10 @@ function App() {
         variant="outlined"
         size="small"
         sx={{ mt: 2, width: "50%" }}
-        onChange={(e) => setUserName(e.target.value)}
+        onChange={(e) => {
+          setUserName(e.target.value);
+          sessionStorage.setItem("userName", e.target.value);
+        }}
 
       />
     </Container>
